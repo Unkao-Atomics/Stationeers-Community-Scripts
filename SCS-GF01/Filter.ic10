@@ -1,0 +1,89 @@
+#GF01: Gas Filtration
+#Auth: Stationeers Community Scripts
+#GITHUB: Unkao-Atomics/Stationeers-Community-Scripts
+#Game_Version: 0.2.3580.17409 - 08.28.2022
+#TODO: Add filter health check, stop(?)
+#TODO: If past Maxkpa, stop(?)
+#TODO: If stopped, blink LED(?)
+
+#### USER EDIT ####
+define triggerAmount 50 #50 default
+define Maxkpa 50000 #50,000kpa (50MPA) default
+#### END USER EDIT ####
+
+alias relief d0
+alias moles r0
+alias molesG1 r1
+alias molesG2 r2
+alias OutputPressure r3
+alias slot1 r4
+alias turnOn r9
+alias reliefOn r10
+
+loop:
+s db Setting 0
+ls slot1 db 0 OccupantHash
+#s d1 Setting r4 #test output hash
+#bne r4 r5 NoFilterMatch
+
+l moles db TotalMolesInput
+
+ls slot1 db 0 OccupantHash
+jal FilterList #jump to filtersearch
+
+#l molesG1 db RatioCarbonDioxideInput
+#l molesG2 db RatioCarbonDioxideInput
+l OutputPressure db PressureOutput
+mul molesG1 molesG1 moles
+mul molesG2 molesG2 moles
+sgt turnOn molesG1 triggerAmount
+s db Mode turnOn
+sgt turnOn molesG2 triggerAmount
+s db Mode turnOn
+sgt reliefOn OutputPressure Maxkpa
+s relief On reliefOn
+yield
+j loop
+
+FilterList:
+beq slot1 1635000764 CO2 #ItemGasFilterCarbonDioxide
+beq slot1 1876847024 CO2 #ItemGasFilterCarbonDioxideL
+beq slot1 416897318 CO2 #ItemGasFilterCarbonDioxideM
+#beq slot1 -1275790165 C2 #ItemGasFilterChlorine
+#beq slot1 -2015427374 H2 #ItemGasFilterHydrogen
+beq slot1 632853248 N2 #ItemGasFilterNitrogen
+beq slot1 -1387439451 N2 #ItemGasFilterNitrogenL
+beq slot1 -632657357 N2 #ItemGasFilterNitrogenM
+beq slot1 -1247674305 NO2 #ItemGasFilterNitrousOxide
+beq slot1 465267979 NO2 #ItemGasFilterNitrousOxideL
+beq slot1 1824284061 NO2 #ItemGasFilterNitrousOxideM
+beq slot1 -721824748 O2 #ItemGasFilterOxygen
+beq slot1 -1217998945 O2 #ItemGasFilterOxygenL
+beq slot1 -1067319543 O2 #ItemGasFilterOxygenM
+beq slot1 1915566057 X #ItemGasFilterPollutants
+beq slot1 1959564765 X #ItemGasFilterPollutantsL
+beq slot1 63677771 X #ItemGasFilterPollutantsM
+#beq slot1 -771677144  #ItemGasFilterPollutantsMK
+beq slot1 15011598 V #ItemGasFilterVolatiles
+beq slot1 1255156286 V #ItemGasFilterVolatilesL
+beq slot1 1037507240 V #ItemGasFilterVolatilesM
+j loop
+
+CO2:
+l molesG1 db RatioCarbonDioxideInput
+j ra
+N2:
+l molesG1 db RatioNitrogenInput
+j ra
+NO2:
+l molesG1 db RatioNitrousOxideInput
+j ra
+O2:
+l molesG1 db RatioOxygenInput
+j ra
+X:
+l molesG1 db RatioPollutantInput
+j ra
+V:
+l molesG1 db RatioVolatilesInput
+j ra
